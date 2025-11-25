@@ -2,7 +2,7 @@
 
 DAG Media is a modern, decentralized social networking platform designed for the blockchain and Directed Acyclic Graph (DAG) community. It blends the familiarity of traditional social media with the power of Web3, offering AI-assisted content creation, crypto wallet integration, and specialized community features.
 #Preview Link
-https://aistudio.google.com/apps/drive/1NcytNqo2B8b4sTfXCaJdySOktpKB0dvc?fullscreenApplet=true&showPreview=true&showAssistant=true
+https://dag-media-5un8kjqwk-sardaunatechworks-projects.vercel.app/
 
 ## 🚀 Overview
 
