@@ -1,20 +1,25 @@
 import React, { useState } from 'react';
 import { Post } from '../types';
-import { Heart, MessageCircle, Repeat, Share, MoreHorizontal, Pin, ShieldCheck } from './Icons';
+import { Heart, MessageCircle, Repeat, Share, MoreHorizontal, Pin, ShieldCheck, Edit2, Trash2 } from './Icons';
 
 interface PostCardProps {
   post: Post;
   onClick?: () => void;
   onPin?: (postId: string) => void;
+  onEdit?: (postId: string, newContent: string) => void;
   isOwner?: boolean;
 }
 
-const PostCard: React.FC<PostCardProps> = ({ post, onClick, onPin, isOwner }) => {
+const PostCard: React.FC<PostCardProps> = ({ post, onClick, onPin, onEdit, isOwner }) => {
   const [isLiked, setIsLiked] = useState(post.likedByMe);
   const [likesCount, setLikesCount] = useState(post.likes);
   const [isReposted, setIsReposted] = useState(false);
   const [repostsCount, setRepostsCount] = useState(post.reposts);
   const [showMenu, setShowMenu] = useState(false);
+  
+  // Edit State
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState(post.content);
 
   const handleLike = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -65,6 +70,26 @@ const PostCard: React.FC<PostCardProps> = ({ post, onClick, onPin, isOwner }) =>
     setShowMenu(false);
   };
 
+  const handleEditAction = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsEditing(true);
+    setShowMenu(false);
+  };
+
+  const handleSaveEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onEdit && editContent.trim() !== "") {
+      onEdit(post.id, editContent);
+    }
+    setIsEditing(false);
+  };
+
+  const handleCancelEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditContent(post.content);
+    setIsEditing(false);
+  };
+
   return (
     <div 
       onClick={onClick}
@@ -95,15 +120,18 @@ const PostCard: React.FC<PostCardProps> = ({ post, onClick, onPin, isOwner }) =>
               )}
               <span className="text-gray-500 text-sm truncate">{post.author.handle}</span>
               <span className="text-gray-500 text-sm">· {post.timestamp}</span>
+              {post.isEdited && <span className="text-gray-600 text-xs italic ml-1">(edited)</span>}
             </div>
             
             <div className="relative">
-              <button 
-                onClick={handleMenu} 
-                className="text-gray-500 hover:text-dag-accent p-1 rounded-full hover:bg-dag-accent/10 transition-colors"
-              >
-                <MoreHorizontal size={16} />
-              </button>
+              {!isEditing && (
+                <button 
+                  onClick={handleMenu} 
+                  className="text-gray-500 hover:text-dag-accent p-1 rounded-full hover:bg-dag-accent/10 transition-colors"
+                >
+                  <MoreHorizontal size={16} />
+                </button>
+              )}
               
               {/* Dropdown Menu */}
               {showMenu && (
@@ -119,6 +147,15 @@ const PostCard: React.FC<PostCardProps> = ({ post, onClick, onPin, isOwner }) =>
                          <span>{post.isPinned ? 'Unpin from profile' : 'Pin to profile'}</span>
                       </button>
                     )}
+                    {isOwner && onEdit && (
+                       <button 
+                         onClick={handleEditAction}
+                         className="flex items-center space-x-2 w-full px-4 py-3 text-left hover:bg-white/10 text-sm transition-colors text-white"
+                       >
+                           <Edit2 size={16} />
+                           <span>Edit post</span>
+                       </button>
+                    )}
                     <button className="flex items-center space-x-2 w-full px-4 py-3 text-left hover:bg-white/10 text-sm transition-colors text-white">
                          <Share size={16} />
                          <span>Copy link</span>
@@ -128,15 +165,45 @@ const PostCard: React.FC<PostCardProps> = ({ post, onClick, onPin, isOwner }) =>
                            <span>Report post</span>
                        </button>
                     )}
+                    {isOwner && (
+                      <button className="flex items-center space-x-2 w-full px-4 py-3 text-left hover:bg-white/10 text-sm transition-colors text-red-400">
+                           <Trash2 size={16} />
+                           <span>Delete</span>
+                      </button>
+                    )}
                   </div>
                 </>
               )}
             </div>
           </div>
           
-          <p className="text-gray-200 mt-1 whitespace-pre-wrap text-sm leading-relaxed">
-            {post.content}
-          </p>
+          {isEditing ? (
+            <div className="mt-2" onClick={e => e.stopPropagation()}>
+              <textarea
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                className="w-full bg-white/5 border border-dag-border rounded-lg p-3 text-white focus:outline-none focus:border-dag-accent resize-none min-h-[100px]"
+              />
+              <div className="flex justify-end space-x-2 mt-2">
+                <button 
+                  onClick={handleCancelEdit}
+                  className="px-3 py-1.5 text-sm font-medium text-gray-400 hover:text-white transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleSaveEdit}
+                  className="px-4 py-1.5 text-sm font-bold bg-dag-accent text-dag-dark rounded-full hover:bg-dag-accent/90 transition-colors"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-gray-200 mt-1 whitespace-pre-wrap text-sm leading-relaxed">
+              {post.content}
+            </p>
+          )}
           
           {post.imageUrl && (
             <div className="mt-3 rounded-xl overflow-hidden border border-dag-border">

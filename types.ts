@@ -8,6 +8,9 @@ export interface User {
   walletAddress?: string;
   followers: number;
   following: number;
+  email?: string;
+  phone?: string;
+  location?: string;
 }
 
 export interface Comment {
@@ -33,6 +36,8 @@ export interface Post {
   commentList?: Comment[];
   isPinned?: boolean;
   isReply?: boolean;
+  isEdited?: boolean;
+  communityId?: string;
 }
 
 export interface Story {

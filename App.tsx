@@ -4,24 +4,31 @@ import Widgets from './components/Widgets';
 import PostCard from './components/PostCard';
 import CreatePost from './components/CreatePost';
 import Stories from './components/Stories';
+import StoryViewer from './components/StoryViewer';
 import CommunityCard from './components/CommunityCard';
 import Explore from './components/Explore';
 import NotificationList from './components/NotificationList';
 import MoreView from './components/MoreView';
 import WalletView from './components/WalletView';
-import { ViewState, Post, User as UserType } from './types';
+import EditProfileModal from './components/EditProfileModal';
+import { ViewState, Post, User as UserType, Story } from './types';
 import { CURRENT_USER, INITIAL_POSTS, STORIES, COMMUNITIES, NOTIFICATIONS, MOCK_NFTS } from './constants';
-import { Home, Hash, Users, Bell, User, ImageIcon, ShieldCheck, Wallet } from './components/Icons';
+import { Home, Hash, Users, Bell, User, ImageIcon, ShieldCheck, Wallet, MapPin } from './components/Icons';
 
 type ProfileTab = 'POSTS' | 'REPLIES' | 'MEDIA' | 'LIKES' | 'NFTS';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>(ViewState.HOME);
   const [posts, setPosts] = useState<Post[]>(INITIAL_POSTS);
+  const [stories, setStories] = useState<Story[]>(STORIES);
   const [currentUser, setCurrentUser] = useState<UserType>(CURRENT_USER);
   const [profileTab, setProfileTab] = useState<ProfileTab>('POSTS');
   const [isWalletConnected, setIsWalletConnected] = useState(false);
+  const [viewingStoryIndex, setViewingStoryIndex] = useState<number | null>(null);
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const storyInputRef = useRef<HTMLInputElement>(null);
 
   const handlePostCreate = (content: string) => {
     const newPost: Post = {
@@ -37,6 +44,16 @@ const App: React.FC = () => {
       isPinned: false
     };
     setPosts([newPost, ...posts]);
+  };
+
+  const handleEditPost = (postId: string, newContent: string) => {
+    setPosts(prevPosts => 
+      prevPosts.map(post => 
+        post.id === postId 
+          ? { ...post, content: newContent, isEdited: true } 
+          : post
+      )
+    );
   };
 
   const handlePinPost = (postId: string) => {
@@ -57,8 +74,38 @@ const App: React.FC = () => {
     }
   };
 
+  const handleStoryUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+        const file = e.target.files[0];
+        const imageUrl = URL.createObjectURL(file);
+        const newStory: Story = {
+            id: `s${Date.now()}`,
+            user: currentUser,
+            imageUrl,
+            hasUnseen: true
+        };
+        // Add new story to the beginning of the list
+        setStories([newStory, ...stories]);
+    }
+  };
+
+  const handleUpdateUser = (updates: Partial<UserType>) => {
+    setCurrentUser(prev => ({ ...prev, ...updates }));
+  };
+
+  const handleLogout = () => {
+    if (window.confirm("Are you sure you want to log out?")) {
+        alert("Logged out successfully.");
+        setCurrentView(ViewState.HOME);
+    }
+  };
+
   const triggerFileInput = () => {
     fileInputRef.current?.click();
+  };
+  
+  const triggerStoryInput = () => {
+    storyInputRef.current?.click();
   };
 
   const scrollToTop = () => {
@@ -67,7 +114,6 @@ const App: React.FC = () => {
 
   const handlePostClick = () => {
     setCurrentView(ViewState.HOME);
-    // Timeout to allow view change before scrolling
     setTimeout(scrollToTop, 100);
   };
   
@@ -83,18 +129,30 @@ const App: React.FC = () => {
             <div className="sticky top-0 z-10 bg-dag-dark/80 backdrop-blur-md border-b border-dag-border px-4 py-3 cursor-pointer" onClick={scrollToTop}>
               <h2 className="text-xl font-bold text-white">Home</h2>
             </div>
-            <Stories stories={STORIES} />
+            
+            <Stories 
+              stories={stories} 
+              onStoryClick={(index) => setViewingStoryIndex(index)}
+              onAddStory={triggerStoryInput}
+            />
+            
             <CreatePost currentUser={currentUser} onPostCreate={handlePostCreate} />
             <div className="pb-20 md:pb-0">
               {posts.map(post => (
-                <PostCard key={post.id} post={post} />
+                <PostCard 
+                  key={post.id} 
+                  post={post} 
+                  onEdit={handleEditPost}
+                  isOwner={post.author.id === currentUser.id}
+                  onPin={handlePinPost}
+                />
               ))}
             </div>
           </>
         );
       
       case ViewState.EXPLORE:
-        return <Explore posts={[...posts].reverse()} />; // Show posts in reverse for variety
+        return <Explore posts={[...posts].reverse()} />; 
 
       case ViewState.COMMUNITIES:
         return (
@@ -123,7 +181,6 @@ const App: React.FC = () => {
         );
 
       case ViewState.PROFILE:
-        // Filter logic based on tabs
         let profilePosts = posts;
         let showPosts = true;
 
@@ -132,15 +189,12 @@ const App: React.FC = () => {
             profilePosts = posts.filter(p => p.author.id === currentUser.id && !p.isReply);
             break;
           case 'REPLIES':
-             // Show posts that are replies
              profilePosts = posts.filter(p => p.author.id === currentUser.id && p.isReply);
              break;
           case 'MEDIA':
-             // Show posts by user that have images
              profilePosts = posts.filter(p => p.author.id === currentUser.id && !!p.imageUrl);
              break;
           case 'LIKES':
-             // Show posts liked by me (from any author)
              profilePosts = posts.filter(p => p.likedByMe);
              break;
           case 'NFTS':
@@ -148,7 +202,6 @@ const App: React.FC = () => {
             break;
         }
 
-        // Apply sorting for user's own profile posts (pinned first)
         if (profileTab === 'POSTS') {
            profilePosts = [...profilePosts].sort((a, b) => {
             if (a.isPinned === b.isPinned) return 0;
@@ -188,7 +241,7 @@ const App: React.FC = () => {
                    </div>
                    <div className="flex justify-end absolute top-4 right-4">
                        <button 
-                         onClick={triggerFileInput}
+                         onClick={() => setIsEditProfileOpen(true)}
                          className="border border-gray-500 text-white font-bold py-1.5 px-4 rounded-full hover:bg-white/10"
                         >
                          Edit Profile
@@ -200,7 +253,13 @@ const App: React.FC = () => {
                    </h1>
                    <p className="text-gray-500">{currentUser.handle}</p>
                    <p className="mt-3 text-gray-200">{currentUser.bio}</p>
-                   <div className="flex gap-4 mt-3 text-gray-500 text-sm">
+                   <div className="flex flex-wrap gap-4 mt-3 text-gray-500 text-sm items-center">
+                       {currentUser.location && (
+                           <div className="flex items-center space-x-1">
+                               <MapPin size={14} className="text-gray-500" />
+                               <span>{currentUser.location}</span>
+                           </div>
+                       )}
                        <span><strong className="text-white">{currentUser.following}</strong> Following</span>
                        <span><strong className="text-white">{currentUser.followers}</strong> Followers</span>
                    </div>
@@ -209,7 +268,6 @@ const App: React.FC = () => {
                    </div>
                </div>
                
-               {/* Profile Tabs */}
                <div className="border-b border-dag-border mt-2 overflow-x-auto no-scrollbar">
                    <div className="flex min-w-max">
                        <button 
@@ -259,6 +317,7 @@ const App: React.FC = () => {
                           post={post} 
                           isOwner={post.author.id === currentUser.id}
                           onPin={handlePinPost}
+                          onEdit={handleEditPost}
                         />
                       ))}
                       {profilePosts.length === 0 && (
@@ -273,7 +332,6 @@ const App: React.FC = () => {
                       )}
                     </>
                   ) : (
-                    // NFT Grid
                     <div className="p-4">
                       {!isWalletConnected ? (
                          <div className="text-center py-12">
@@ -312,7 +370,13 @@ const App: React.FC = () => {
         );
 
       case ViewState.MORE:
-        return <MoreView currentUser={currentUser} />;
+        return (
+          <MoreView 
+            currentUser={currentUser} 
+            onUpdateUser={handleUpdateUser} 
+            onLogout={handleLogout}
+          />
+        );
 
       default:
         return (
@@ -324,9 +388,36 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-dag-dark text-white max-w-[1400px] mx-auto flex">
+    <div className="min-h-screen bg-dag-dark text-white max-w-[1400px] mx-auto flex relative">
       
-      {/* Left Sidebar - Hidden on Mobile */}
+      {/* Hidden Inputs */}
+      <input 
+          type="file" 
+          ref={storyInputRef}
+          onChange={handleStoryUpload}
+          accept="image/*"
+          className="hidden"
+      />
+
+      {/* Story Viewer Overlay */}
+      {viewingStoryIndex !== null && (
+         <StoryViewer 
+            stories={stories} 
+            initialIndex={viewingStoryIndex} 
+            onClose={() => setViewingStoryIndex(null)} 
+         />
+      )}
+
+      {/* Edit Profile Modal */}
+      {isEditProfileOpen && (
+        <EditProfileModal 
+          user={currentUser} 
+          onSave={handleUpdateUser} 
+          onClose={() => setIsEditProfileOpen(false)} 
+        />
+      )}
+
+      {/* Left Sidebar */}
       <header className="hidden md:flex flex-col w-20 xl:w-72 flex-shrink-0 border-r border-dag-border z-20 sticky top-0 h-screen">
         <Sidebar currentView={currentView} onViewChange={setCurrentView} currentUser={currentUser} onPostClick={handlePostClick} />
       </header>
@@ -336,7 +427,7 @@ const App: React.FC = () => {
         {renderContent()}
       </main>
 
-      {/* Right Widgets - Hidden on Tablet/Mobile */}
+      {/* Right Widgets */}
       <aside className="hidden lg:block w-80 xl:w-96 flex-shrink-0 sticky top-0 h-screen overflow-y-auto">
         <Widgets />
       </aside>

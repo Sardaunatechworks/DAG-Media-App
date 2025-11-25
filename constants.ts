@@ -10,6 +10,9 @@ export const CURRENT_USER: User = {
   walletAddress: '0x71C...9A21',
   followers: 1250,
   following: 420,
+  email: 'dev@blockdag.network',
+  phone: '+1 (555) 019-2834',
+  location: 'United States'
 };
 
 export const OFFICIAL_USER: User = {
@@ -52,7 +55,7 @@ export const STORIES: Story[] = [
   { id: 's1', user: USERS[2], imageUrl: 'https://picsum.photos/400/800?random=10', hasUnseen: true },
   { id: 's2', user: USERS[3], imageUrl: 'https://picsum.photos/400/800?random=11', hasUnseen: false },
   { id: 's3', user: CURRENT_USER, imageUrl: 'https://picsum.photos/400/800?random=12', hasUnseen: false },
-  { id: 's4', user: { ...USERS[2], id: 'u4', username: 'DaoVinci' }, imageUrl: 'https://picsum.photos/400/800?random=13', hasUnseen: true },
+  { id: 's4', user: { ...USERS[2], id: 'u4', username: 'DaoVinci', handle: '@daovinci', avatarUrl: 'https://picsum.photos/200/200?random=4', bio: 'Art', isVerified: false, followers: 100, following: 10 }, imageUrl: 'https://picsum.photos/400/800?random=13', hasUnseen: true },
 ];
 
 export const INITIAL_POSTS: Post[] = [
@@ -66,6 +69,7 @@ export const INITIAL_POSTS: Post[] = [
     reposts: 120,
     tags: ['DAG', 'Crypto', 'Blockchain'],
     likedByMe: true,
+    communityId: 'c1'
   },
   {
     id: 'p2',
@@ -78,6 +82,7 @@ export const INITIAL_POSTS: Post[] = [
     reposts: 50,
     tags: ['NFT', 'Art'],
     likedByMe: false,
+    communityId: 'c2'
   },
   {
     id: 'p3',
@@ -89,6 +94,7 @@ export const INITIAL_POSTS: Post[] = [
     reposts: 5,
     tags: ['Dev', 'Privacy'],
     likedByMe: false,
+    communityId: 'c1'
   },
   {
     id: 'p4',

@@ -27,7 +27,18 @@ import {
   CreditCard,
   ArrowLeftRight,
   ExternalLink,
-  Plus
+  Plus,
+  Edit2,
+  Trash2,
+  ChevronRight,
+  ArrowLeft,
+  Globe,
+  Mail,
+  Phone,
+  Key,
+  Smartphone,
+  Camera,
+  MapPin
 } from 'lucide-react';
 
 export {
@@ -59,5 +70,16 @@ export {
   CreditCard,
   ArrowLeftRight,
   ExternalLink,
-  Plus
+  Plus,
+  Edit2,
+  Trash2,
+  ChevronRight,
+  ArrowLeft,
+  Globe,
+  Mail,
+  Phone,
+  Key,
+  Smartphone,
+  Camera,
+  MapPin
 };
